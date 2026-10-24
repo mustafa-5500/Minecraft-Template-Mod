@@ -1,72 +1,67 @@
 plugins {
-    id 'java'
-    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.9'
-    id 'com.gradleup.shadow' version '9.3.1'
+    // The -remap variant is used for obfuscated Minecraft versions such as 1.21.x.
+    // Use 'net.fabricmc.fabric-loom' for the unobfuscated 26.x versions.
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    id 'maven-publish'
 }
 
-group = 'com.example'
-version = '1.0.0-SNAPSHOT'
+version = project.mod_version
+group = project.maven_group
 
-// ---------------------------------------------------------------------------
-// Minecraft server detection
-// ---------------------------------------------------------------------------
-// Point -Pmc_server_jar=/path/to/paper.jar at your Paper server JAR, or place
-// it at run/paper.jar and it will be picked up automatically.
-ext {
-    mcServerJar = project.findProperty('mc_server_jar') ?: "${projectDir}/run/paper.jar"
+base {
+    archivesName = project.archives_base_name
 }
 
-def hasMcServer = file(mcServerJar).exists()
-if (!hasMcServer) {
-    logger.lifecycle("Minecraft server JAR not detected at ${mcServerJar}; run configs will be skipped. " +
-            "Set -Pmc_server_jar=/path/to/paper.jar or place paper.jar in the run/ directory to enable them.")
-}
-
-// Shadow plugin is currently commented out above (e.g. offline dev); fall back to the plain jar task.
-def hasShadowPlugin = pluginManager.hasPlugin('com.gradleup.shadow')
-if (!hasShadowPlugin) {
-    logger.lifecycle("Shadow plugin not applied; 'build' will produce the plain jar instead of a shaded jar.")
-}
-
-// ---------------------------------------------------------------------------
-// Java toolchain
-// ---------------------------------------------------------------------------
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-    withSourcesJar()
-    withJavadocJar()
-}
-
-// Quiet warnings about missing Javadocs.
-javadoc {
-    options.addStringOption('Xdoclint:-missing', '-quiet')
-}
-
-// ---------------------------------------------------------------------------
-// Repositories & dependencies
-// ---------------------------------------------------------------------------
+// Loom adds the Minecraft, Mojang and Fabric repositories for you. Add extra
+// repositories here only when you depend on other mods or libraries.
 repositories {
-    mavenCentral()
-    maven {
-        name = 'papermc'
-        url = 'https://repo.papermc.io/repository/maven-public/'
+    // maven {
+    //     name = 'Example Maven'
+    //     url = 'https://example.com/maven'
+    // }
+}
+
+loom {
+    // Keep client-only code in src/client so it never loads on a dedicated server.
+    splitEnvironmentSourceSets()
+
+    mods {
+        "examplemod" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
     }
+
+    // Uncomment this after adding src/main/resources/examplemod.accesswidener.
+    // accessWidenerPath = file("src/main/resources/examplemod.accesswidener")
 }
 
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
-    // Your dependencies here
-    compileOnly fileTree(dir: 'libs', include: '*.jar')
+    // Versions are defined in gradle.properties. Check https://fabricmc.net/develop
+    // for the latest combination for your Minecraft version.
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    // Fabric API is optional, but most mods use it. Remove it if you do not need it.
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 // ---------------------------------------------------------------------------
-// Resource processing – inject version into plugin.yml
+// Resource processing - inject Gradle properties into fabric.mod.json
 // ---------------------------------------------------------------------------
+def resourceProperties = [
+        version          : project.version,
+        minecraft_version: project.minecraft_version,
+        loader_version   : project.loader_version,
+        java_version     : project.java_version
+]
+
 processResources {
-    filesMatching('plugin.yml') {
-        expand(version: project.version)
+    inputs.properties(resourceProperties)
+
+    filesMatching('fabric.mod.json') {
+        expand(resourceProperties)
     }
 }
 
@@ -75,97 +70,25 @@ processResources {
 // ---------------------------------------------------------------------------
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.forkOptions.jvmArgs = ['-Xmx1g']
+    options.release = project.java_version.toInteger()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(project.java_version.toInteger())
+    }
+    // Also publish a sources jar; Loom includes it in the build.
+    withSourcesJar()
 }
 
 // ---------------------------------------------------------------------------
-// Shadow JAR
+// Publishing
 // ---------------------------------------------------------------------------
-if (hasShadowPlugin) {
-    tasks.named('shadowJar') {
-        archiveClassifier.set('')
-        mergeServiceFiles()
-    }
-
-    // Ensure the shaded jar is produced during a normal build.
-    tasks.named('build') {
-        dependsOn 'shadowJar'
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Copy plugin JAR into the server's plugins/ folder after build
-// ---------------------------------------------------------------------------
-if (hasMcServer) {
-    tasks.register('copyToServer', Copy) {
-        def jarTask = hasShadowPlugin ? tasks.named('shadowJar') : tasks.named('jar')
-        dependsOn jarTask
-        from jarTask.map { it.archiveFile }
-        into file("${projectDir}/run/plugins")
-    }
-}
-
-tasks.register('copyDependencies', Copy) {
-    from configurations.compileClasspath
-    into layout.buildDirectory.dir('libs')
-}
-
-// ---------------------------------------------------------------------------
-// IDE run configurations
-// ---------------------------------------------------------------------------
-if (hasMcServer) {
-    // Create the working directory and plugins folder if they don't exist.
-    def serverRunDir = file("${projectDir}/run")
-    if (!serverRunDir.exists()) {
-        serverRunDir.mkdirs()
-    }
-    def pluginsDir = file("${serverRunDir}/plugins")
-    if (!pluginsDir.exists()) {
-        pluginsDir.mkdirs()
-    }
-
-    def serverArgs = "-Xmx2G -Xms1G -jar ${mcServerJar} --nogui"
-
-    // IntelliJ IDEA run configuration
-    idea.project.settings.runConfigurations {
-        'PaperServer'(org.jetbrains.gradle.ext.Application) {
-            mainClass = 'io.papermc.paperclip.Paperclip'
-            moduleName = project.idea.module.name + '.main'
-            jvmArgs = '-Xmx2G -Xms1G'
-            programParameters = '--nogui'
-            workingDirectory = serverRunDir.absolutePath
-        }
-    }
-
-    // VSCode launch.json generation
-    tasks.register('generateVSCodeLaunch') {
-        def vscodeDir = file("${projectDir}/.vscode")
-        def launchFile = file("${vscodeDir}/launch.json")
-        doLast {
-            if (!vscodeDir.exists()) {
-                vscodeDir.mkdirs()
-            }
-            def launchConfig = [
-                    version: "0.2.0",
-                    configurations: [
-                            [
-                                    type   : "java",
-                                    name   : "Paper Server",
-                                    request: "launch",
-                                    mainClass: "io.papermc.paperclip.Paperclip",
-                                    vmArgs : "-Xmx2G -Xms1G",
-                                    args   : "--nogui",
-                                    cwd    : "\${workspaceFolder}/run"
-                            ]
-                    ]
-            ]
-            launchFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(launchConfig))
-        }
-    }
-} else {
-    tasks.register('generateVSCodeLaunch') {
-        doLast {
-            logger.lifecycle("Skipped VSCode launch configuration because no Minecraft server JAR was found.")
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            artifactId = project.archives_base_name
+            from components.java
         }
     }
 }
@@ -178,6 +101,7 @@ if (hasMcServer) {
 tasks.register('devLog', Exec) {
     group = 'documentation'
     description = "Create or open today's dev log entry (Utils/dev-log-generator)."
+    workingDir = projectDir
 
     def scriptArgs = ["${projectDir}/Utils/dev-log-generator/generate_dev_log.py"]
     if (project.hasProperty('date')) {

@@ -1,12 +1,13 @@
-# Auto-detect text files and normalise line endings to LF
+# Normalise line endings to LF in the repository.
 * text=auto eol=lf
 
-# Force Unix line endings on shell scripts (critical for CI)
+# Shell scripts must stay LF for CI.
 gradlew text eol=lf
 *.sh    text eol=lf
 
-# Force Windows line endings on batch files
+# Windows batch files must stay CRLF.
 *.bat   text eol=crlf
 
-# Binary files
+# Binary files.
 *.jar   binary
+*.png   binary
