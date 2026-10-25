@@ -6,17 +6,17 @@ repository, plus a few optional extensions.
 
 ## Toolchain at a glance
 
-| Component | Version / location | Purpose |
-|-----------|--------------------|---------|
-| Minecraft | `1.21` (`gradle.properties`) | Target game version |
-| Fabric Loader | `0.19.5` | Loads the mod into Minecraft |
-| Fabric API | `0.102.0+1.21` | Shared Fabric APIs used by the example |
-| Fabric Loom | `1.19.3` (`net.fabricmc.fabric-loom-remap`) | Resolves Minecraft, remaps, generates run tasks |
-| Gradle | `9.8.1` (wrapper) | Reproducible build execution |
-| Java target | `21` | Bytecode level of the built mod |
-| Gradle runtime | JDK 25 | Loom 1.18+ uses the Java 25 FFM API |
-| CI | GitHub Actions | Build, artifact upload, release |
-| Dev log | `Utils` submodule + `devLog` Gradle task | Developer journal entries |
+| Component      | Version / location                               | Purpose                                         |
+| -------------- | ------------------------------------------------ | ----------------------------------------------- |
+| Minecraft      | `1.21` [gradle.properties](../gradle.properties) | Target game version                             |
+| Fabric Loader  | `0.19.5`                                         | Loads the mod into Minecraft                    |
+| Fabric API     | `0.102.0+1.21`                                   | Shared Fabric APIs used by the example          |
+| Fabric Loom    | `1.19.3` (`net.fabricmc.fabric-loom-remap`)      | Resolves Minecraft, remaps, generates run tasks |
+| Gradle         | `9.8.1` (wrapper)                                | Reproducible build execution                    |
+| Java target    | `21`                                             | Bytecode level of the built mod                 |
+| Gradle runtime | JDK 25                                           | Loom 1.18+ uses the Java 25 FFM API             |
+| CI             | GitHub Actions                                   | Build, artifact upload, release                 |
+| Dev log        | `Utils` submodule + `devLog` Gradle task         | Developer journal entries                       |
 
 The two Java versions are intentional: Gradle and Loom run on JDK 25, while the
 compiled mod uses `--release 21` so it runs on Minecraft 1.21's Java 21
@@ -25,7 +25,6 @@ runtime.
 ## 1. Local build workflow
 
 ### Prerequisites
-
 - JDK 25 available to Gradle (`java -version` should report 25).
 - Git, if you are cloning or publishing releases.
 - Network access for the first build; Gradle downloads Minecraft, mappings, and
@@ -68,16 +67,16 @@ macOS / Linux:
 
 ### Task reference
 
-| Task | What it does |
-|------|--------------|
-| `build` | Runs `check`, compiles `main` and `client`, processes resources, builds the jar, and remaps it |
-| `test` | Runs tests under `src/test`; currently `NO-SOURCE` because the template has no tests |
-| `remapJar` | Remaps the development jar into the final production mod jar |
-| `runClient` | Starts a development client using Loom's generated run configuration |
-| `runServer` | Starts a dedicated development server |
-| `genSources` | Decompiles Minecraft and attaches sources for IDE navigation |
-| `devLog` | Creates or opens today's dev log under `Development-Notes/` |
-| `clean` | Deletes `build/` only; it does not clear the Gradle dependency cache |
+| Task         | What it does                                                                                   |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| `build`      | Runs `check`, compiles `main` and `client`, processes resources, builds the jar, and remaps it |
+| `test`       | Runs tests under `src/test`; currently `NO-SOURCE` because the template has no tests           |
+| `remapJar`   | Remaps the development jar into the final production mod jar                                   |
+| `runClient`  | Starts a development client using Loom's generated run configuration                           |
+| `runServer`  | Starts a dedicated development server                                                          |
+| `genSources` | Decompiles Minecraft and attaches sources for IDE navigation                                   |
+| `devLog`     | Creates or opens today's dev log under `Development-Notes/`                                    |
+| `clean`      | Deletes `build/` only; it does not clear the Gradle dependency cache                           |
 
 ### Where build outputs live
 
@@ -149,10 +148,13 @@ This is the single source of truth for versions:
 
 ```properties
 minecraft_version=1.21
-loader_version=0.19.5
-loom_version=1.19.3
+yarn_mappings=1.21+build.9
+loader_version=0.20.1
+loom_version=1.19-SNAPSHOT
+
+
+# Fabric API
 fabric_api_version=0.102.0+1.21
-java_version=21
 ```
 
 `maven_group`, `archives_base_name`, and `mod_version` control the project
@@ -166,6 +168,8 @@ fabric_api_version=0.116.17+1.21.1
 ```
 
 The rest of the toolchain stays the same.
+
+To find the correct versioning use the tools at https://fabricmc.net/develop/.
 
 ### `build.gradle`
 

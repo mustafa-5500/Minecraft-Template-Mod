@@ -1,10 +1,10 @@
 # Fabric Mod Template
 
-A starter repository for Minecraft **Fabric** mods. It contains a working Gradle
-build, a small example mod, Loom run tasks, and a GitHub Actions workflow.
+A starter repository for Minecraft **Fabric** mods. It contains a working [Gradle](../../../../Knowledge/Computer%20Science/DevOps/Minecraft%20Mods/Gradle)
+build, a small example mod, [Loom](Loom.md) run tasks, and a [GitHub Actions](../../../../Knowledge/Computer%20Science/DevOps/Minecraft%20Mods/Github%20Actions) workflow.
 
 The example registers an item (`examplemod:example_item`), adds it to the
-Ingredients creative tab, registers `/examplemod give`, and logs from a mixin.
+Ingredients creative tab, registers `/examplemod give`, and logs from a [mixin](../../../../Knowledge/Computer%20Science/DevOps/Minecraft%20Mods/Mixin.md).
 Use it as a reference, then replace it with your own code.
 
 ## Features
@@ -19,8 +19,8 @@ Use it as a reference, then replace it with your own code.
 - **Loom run tasks** — `runClient` and `runServer` with no manual server setup
 - **GitHub Actions CI** — builds on pushes and pull requests, and attaches the
   built jars to a GitHub Release when a `v*` tag is pushed
-- **DevOps guide** — build, CI, release, and operations documentation in
-  `Documentation/DEVOPS.md`
+- **[DevOps guide](./Documentation/DevOps.md)** — build, CI, release, and operations documentation in
+  `Documentation/DevOps.md`
 - **Dev log helper** — `gradlew devLog` from the bundled `Utils` submodule
 
 ## Requirements
@@ -108,7 +108,7 @@ mixin writes a message to the log whenever a server level loads.
 │   │       └── assets/examplemod/         # icon, textures, models, lang
 │   └── client/
 │       └── java/com/example/examplemod/client/ExampleModClient.java
-├── Documentation/DEVOPS.md                # build, CI, release, and operations guide
+├── Documentation/DevOps.md                # build, CI, release, and operations guide
 └── .github/workflows/build.yml   # CI and release workflow
 ```
 
@@ -118,20 +118,20 @@ physical client.
 
 ## Gradle Tasks
 
-| Task | Description |
-|------|-------------|
-| `build` | Compile, process resources, remap, and produce the mod jar |
-| `remapJar` | Remap the compiled jar into the final mod jar |
-| `runClient` | Launch a development client |
-| `runServer` | Launch a development server |
-| `genSources` | Decompile and attach Minecraft sources for your IDE |
-| `test` | Run tests (add tests under `src/test` when needed) |
-| `devLog` | Create or open today's dev log in `Development-Notes` |
-| `clean` | Delete the `build` directory |
+| Task         | Description                                                |
+| ------------ | ---------------------------------------------------------- |
+| `build`      | Compile, process resources, remap, and produce the mod jar |
+| `remapJar`   | Remap the compiled jar into the final mod jar              |
+| `runClient`  | Launch a development client                                |
+| `runServer`  | Launch a development server                                |
+| `genSources` | Decompile and attach Minecraft sources for your IDE        |
+| `test`       | Run tests (add tests under `src/test` when needed)         |
+| `devLog`     | Create or open today's dev log in `Development-Notes`      |
+| `clean`      | Delete the `build` directory                               |
 
 ## DevOps Guide
 
-The template includes a dedicated [DevOps guide](Documentation/DEVOPS.md) covering the
+The template includes a dedicated [DevOps guide](DevOps.md) covering the
 Gradle wrapper, Loom, GitHub Actions, artifacts, releases, version updates,
 caching, security, and troubleshooting for the tools in this repository.
 
